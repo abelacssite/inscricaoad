@@ -11,6 +11,7 @@ wfunction salvarCadastro(dados) {
             alert("Erro ao salvar cadastro: " + error);
         });
 }
+
 // Ouve o evento de "submit" (envio) do formulário
 document.getElementById("formCadastro").addEventListener("submit", function(e) {
     // ESSENCIAL: Impede o navegador de recarregar a página
