@@ -1,70 +1,72 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Cadastro de Castração</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Castração</title>
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
-  <h1>Cadastro de Animais para Castração</h1>
+    <h1>Cadastro de Animais para Castração</h1>
 
-  <form id="formCadastro">
-    <h2>Dados do Tutor</h2>
-    <label>Nome do Tutor:</label>
-    <input type="text" id="tutorNome" required><br>
+    <form id="formCadastro">
+        <h2>Dados do Tutor</h2>
+        <label for="tutorNome">Nome do Tutor:</label>
+        <input type="text" id="tutorNome" required><br>
 
-    <label>Telefone:</label>
-    <input type="tel" id="tutorTelefone" required><br>
+        <label for="tutorTelefone">Telefone:</label>
+        <input type="tel" id="tutorTelefone" required><br>
 
-    <h2>Dados do Animal</h2>
-    <label>Nome do Animal:</label>
-    <input type="text" id="animalNome" required><br>
+        <h2>Dados do Animal</h2>
+        <label for="animalNome">Nome do Animal:</label>
+        <input type="text" id="animalNome" required><br>
 
-    <label>Espécie:</label>
-    <input type="text" id="animalEspecie" required><br>
+        <label for="animalEspecie">Espécie:</label>
+        <input type="text" id="animalEspecie" required><br>
 
-    <label>Raça:</label>
-    <input type="text" id="animalRaca"><br>
+        <label for="animalRaca">Raça:</label>
+        <input type="text" id="animalRaca"><br>
 
-    <label>Idade:</label>
-    <input type="number" id="animalIdade"><br>
+        <label for="animalIdade">Idade:</label>
+        <input type="number" id="animalIdade"><br>
 
-    <label>Sexo:</label>
-    <select id="animalSexo">
-      <option value="Macho">Macho</option>
-      <option value="Fêmea">Fêmea</option>
-    </select><br>
+        <label for="animalSexo">Sexo:</label>
+        <select id="animalSexo">
+            <option value="Macho">Macho</option>
+            <option value="Femea">Fêmea</option>
+        </select><br>
 
-    <label>Peso (kg):</label>
-    <input type="number" step="0.1" id="animalPeso"><br>
+        <label for="animalPeso">Peso (kg):</label>
+        <input type="number" step="0.1" id="animalPeso"><br>
 
-    <button type="submit">Cadastrar</button>
-  </form>
+        <button type="submit">Cadastrar</button>
+    </form>
 
-  <h2>Cadastros</h2>
-<div id="listaCadastros"></div>
+    <h2>Cadastros</h2>
+    <div id="listaCadastros"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
     <script>
         const firebaseConfig = {
-  apiKey: "AIzaSyBisV1CC3hSAiLy86KGsHFZzkSpygU48Rw",
-  authDomain: "cadastro-d1cd7.firebaseapp.com",
-  projectId: "cadastro-d1cd7",
-  storageBucket: "cadastro-d1cd7.firebasestorage.app",
-  messagingSenderId: "107695824321",
-  appId: "1:107695824321:web:1465b7f5b19bd90e48a340"
-};
+            // ... SUA CONFIGURAÇÃO COMPLETA AQUI ...
+            apiKey: "AIzaSyBlsVlCC3SAIlyB6KgSHFzzK5pygU48Rw",
+            authDomain: "cadastro-dled7.firebaseapp.com",
+            projectId: "cadastro-dled7",
+            storageBucket: "cadastro-dled7.appspot.com",
+            messagingSenderId: "107695824321",
+            appId: "1:107695824321:web:1465b7f5b19bd90e48a340"
+        };
 
         // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
 
-        // ESSA LINHA CRIA A VARIÁVEL QUE SEU script.js PRECISA
+        // ESSENCIAL: Cria a variável 'db' no escopo global
         const db = firebase.firestore(); 
     </script>
-    
+
     <script src="script.js"></script>
-  
+
 </body>
 </html>
