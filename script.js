@@ -1,17 +1,24 @@
 // A função 'db' foi definida no index.html e está disponível aqui.
+// NÃO REMOVA OU COMENTE A FUNÇÃO db = firebase.firestore(); NO index.html!
 
 function salvarCadastro(dados) {
     // Define o nome da coleção no Firestore
     db.collection("Animais").add(dados)
     .then(() => {
+        // Se o código chegar aqui, significa que salvou com sucesso
         alert("Cadastro salvo com sucesso no Firebase!");
         // Se você quiser ver a lista, chame aqui:
         // atualizarLista(); 
     })
     .catch((error) => {
-        // ESSENCIAL: Isso deve disparar se houver problemas de permissão (Regras do Firestore)
-        alert("Erro ao salvar cadastro: " + error); 
-        console.error("Erro ao adicionar documento:", error);
+        // ESSENCIAL: Isso será disparado se houver qualquer erro (regras, rede, config)
+        
+        // Imprime o erro completo no console para diagnóstico avançado
+        console.error("ERRO COMPLETO AO TENTAR SALVAR:", error); 
+        
+        // Alerta o usuário com a mensagem de erro que o Firebase retornou
+        // Se a mensagem for "Permission Denied", o problema são as regras.
+        alert("Erro ao salvar cadastro: " + error.message); 
     });
 }
 
@@ -37,7 +44,4 @@ document.getElementById("formCadastro").addEventListener("submit", function(e) {
 
     // Limpa os campos do formulário após o envio
     this.reset();
-
-    // A função 'atualizarLista()' deve estar em algum lugar do seu código
-    // A função 'salvarCadastro(dados)' também deve estar no seu código
 });
