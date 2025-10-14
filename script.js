@@ -1,22 +1,25 @@
-wfunction salvarCadastro(dados) {
-    // Usa a variável 'db' definida no index.html
-    db.collection("Animais") // Define o nome da coleção no Firestore
-        .add(dados) // Adiciona os dados do formulário
-        .then(() => {
-            alert("Cadastro salvo com sucesso no Firebase!");
-            // Se você quiser que a lista recarregue, chame aqui:
-            // atualizarLista(); 
-        })
-        .catch((error) => {
-            alert("Erro ao salvar cadastro: " + error);
-        });
+// A função 'db' foi definida no index.html e está disponível aqui.
+
+function salvarCadastro(dados) {
+    // Define o nome da coleção no Firestore
+    db.collection("Animais").add(dados)
+    .then(() => {
+        alert("Cadastro salvo com sucesso no Firebase!");
+        // Se você quiser ver a lista, chame aqui:
+        // atualizarLista(); 
+    })
+    .catch((error) => {
+        // ESSENCIAL: Isso deve disparar se houver problemas de permissão (Regras do Firestore)
+        alert("Erro ao salvar cadastro: " + error); 
+        console.error("Erro ao adicionar documento:", error);
+    });
 }
 
 // Ouve o evento de "submit" (envio) do formulário
 document.getElementById("formCadastro").addEventListener("submit", function(e) {
     // ESSENCIAL: Impede o navegador de recarregar a página
-    e.preventDefault(); 
-    
+    e.preventDefault();
+
     // Captura os valores de TODOS os campos do seu formulário
     const dados = {
         tutorNome: document.getElementById("tutorNome").value,
@@ -29,12 +32,12 @@ document.getElementById("formCadastro").addEventListener("submit", function(e) {
         animalPeso: document.getElementById("animalPeso").value,
     };
 
-    // Chama a função que salva no Firebase (que você já corrigiu)
+    // Chama a função que salva no Firebase
     salvarCadastro(dados);
 
     // Limpa os campos do formulário após o envio
     this.reset();
-});
 
-// A função 'atualizarLista()' deve estar em algum lugar do seu código
-// A função 'salvarCadastro(dados)' também deve estar no seu código
+    // A função 'atualizarLista()' deve estar em algum lugar do seu código
+    // A função 'salvarCadastro(dados)' também deve estar no seu código
+});
