@@ -1,15 +1,19 @@
 // A função 'db' é definida no index.html e deve estar globalmente acessível.
 
-// Importa a função de consulta (Query) necessária para a verificação
-// Se você não estiver usando módulos ES6 (import/export) e sim o script-compat,
-// o método 'where' já estará disponível em 'firebase.firestore.FieldPath' (v8/compat).
-// Vamos manter a sintaxe de compatibilidade que você estava usando.
+/**
+ * Função utilitária para limpar o telefone, removendo tudo que não for número.
+ * Ex: "(11) 98765-4321" -> "11987654321"
+ */
+function limparTelefone(telefone) {
+    // Remove todos os caracteres que não são dígitos (0-9)
+    return telefone.replace(/\D/g, ''); 
+}
 
 function salvarCadastro(dados) {
     db.collection("Animais").add(dados)
     .then(() => {
         alert("Cadastro salvo com sucesso no Firebase!");
-        // Opcional: atualizarLista(); 
+        document.getElementById("formCadastro").reset(); // Limpa aqui após o sucesso
     })
     .catch((error) => {
         console.error("ERRO COMPLETO AO TENTAR SALVAR:", error); 
@@ -17,24 +21,17 @@ function salvarCadastro(dados) {
     });
 }
 
-/**
- * Verifica se já existe um cadastro com o mesmo número de telefone do tutor.
- * @param {string} telefone O número de telefone a ser verificado.
- * @param {object} dados Os dados completos do formulário.
- */
-function verificarDuplicidade(telefone, dados) {
-    // 1. Faz uma consulta na coleção 'Animais' para encontrar o telefone
+function verificarDuplicidade(telefoneLimpo, dados) {
+    // 1. Faz a busca usando o número de telefone LIMPO
     db.collection("Animais")
-      .where("tutorTelefone", "==", telefone)
+      .where("tutorTelefone", "==", telefoneLimpo) 
       .get()
       .then((querySnapshot) => {
           if (querySnapshot.empty) {
-              // 2. Se a consulta retornar VAZIA, não há duplicidade.
-              console.log("Nenhuma duplicidade encontrada. Prosseguindo com o salvamento.");
+              // 2. Se não encontrou, salva.
               salvarCadastro(dados);
           } else {
-              // 3. Se retornar algum documento, a inscrição é duplicada.
-              console.log("Duplicidade encontrada.");
+              // 3. Duplicidade encontrada.
               alert("Erro: Já existe um cadastro registrado com este número de telefone!");
               document.getElementById("formCadastro").reset(); // Limpa o formulário
           }
@@ -50,10 +47,14 @@ function verificarDuplicidade(telefone, dados) {
 document.getElementById("formCadastro").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    // Captura os valores
+    // Captura o telefone e o limpa IMEDIATAMENTE
+    const telefone = document.getElementById("tutorTelefone").value;
+    const telefoneLimpo = limparTelefone(telefone);
+
+    // Captura os demais valores, usando o telefone limpo no objeto de dados
     const dados = {
         tutorNome: document.getElementById("tutorNome").value,
-        tutorTelefone: document.getElementById("tutorTelefone").value, // Campo chave para verificação
+        tutorTelefone: telefoneLimpo, // **SALVA o número LIMPO no Firebase**
         animalNome: document.getElementById("animalNome").value,
         animalEspecie: document.getElementById("animalEspecie").value,
         animalRaca: document.getElementById("animalRaca").value,
@@ -62,10 +63,6 @@ document.getElementById("formCadastro").addEventListener("submit", function(e) {
         animalPeso: document.getElementById("animalPeso").value,
     };
     
-    // Antes de salvar, verifica se já existe o telefone
-    verificarDuplicidade(dados.tutorTelefone, dados);
-
-    // O reset foi movido para dentro de 'verificarDuplicidade'
-    // para garantir que só limpe se a inscrição for salva ou se for um erro de duplicidade.
-
+    // Antes de salvar, verifica se já existe o telefone limpo
+    verificarDuplicidade(telefoneLimpo, dados);
 });
