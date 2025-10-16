@@ -1,60 +1,90 @@
 // A função 'db' é definida no index.html e deve estar globalmente acessível.
 
 /**
- * Função utilitária para limpar o telefone, removendo tudo que não for número.
- * Ex: "(11) 98765-4321" -> "11987654321"
+ * Função principal para salvar os dados no Firestore.
+ * @param {object} dados Os dados do formulário a serem salvos.
  */
-function limparTelefone(telefone) {
-    // Remove todos os caracteres que não são dígitos (0-9)
-    return telefone.replace(/\D/g, ''); 
-}
-
 function salvarCadastro(dados) {
+    // Define o nome da coleção no Firestore e adiciona os dados
     db.collection("Animais").add(dados)
-    .then(() => {
-        alert("Cadastro salvo com sucesso no Firebase!");
-        document.getElementById("formCadastro").reset(); // Limpa aqui após o sucesso
+    .then((docRef) => {
+        // SUCESSO! O docRef contém o ID do novo documento (o "Número de Inscrição")
+        
+        // 1. Prepara a mensagem de sucesso
+        const numeroInscricao = docRef.id;
+        
+        // 2. Chama a função para gerar e baixar o comprovante
+        gerarComprovante(numeroInscricao, dados);
+
+        // 3. Alerta o usuário (opcional, pois o comprovante já avisa)
+        alert(`Cadastro realizado com sucesso! Número da Inscrição: ${numeroInscricao}`);
     })
     .catch((error) => {
+        // ESSENCIAL: Disparado se houver qualquer erro (regras, rede, config)
         console.error("ERRO COMPLETO AO TENTAR SALVAR:", error); 
-        alert("Erro ao salvar cadastro: " + error.message); 
+        alert("Erro ao salvar cadastro. Por favor, verifique sua conexão: " + error.message); 
     });
 }
 
-function verificarDuplicidade(telefoneLimpo, dados) {
-    // 1. Faz a busca usando o número de telefone LIMPO
-    db.collection("Animais")
-      .where("tutorTelefone", "==", telefoneLimpo) 
-      .get()
-      .then((querySnapshot) => {
-          if (querySnapshot.empty) {
-              // 2. Se não encontrou, salva.
-              salvarCadastro(dados);
-          } else {
-              // 3. Duplicidade encontrada.
-              alert("Erro: Já existe um cadastro registrado com este número de telefone!");
-              document.getElementById("formCadastro").reset(); // Limpa o formulário
-          }
-      })
-      .catch((error) => {
-          console.error("Erro ao verificar duplicidade:", error);
-          alert("Ocorreu um erro ao verificar a duplicidade. Tente novamente.");
-      });
+/**
+ * Gera e inicia o download de um arquivo de texto (.txt) com os dados da inscrição.
+ * @param {string} numeroInscricao O ID gerado pelo Firestore (o número da inscrição).
+ * @param {object} dados Os dados completos do formulário.
+ */
+function gerarComprovante(numeroInscricao, dados) {
+    
+    // Formata o comprovante com todos os dados
+    const comprovanteTexto = `
+    --- COMPROVANTE DE INSCRIÇÃO PARA CASTRAÇÃO ---
+    
+    NÚMERO DA INSCRIÇÃO: ${numeroInscricao}
+    Data de Geração: ${new Date().toLocaleDateString('pt-BR')}
+
+    DADOS DO TUTOR:
+    Nome: ${dados.tutorNome}
+    Telefone: ${dados.tutorTelefone}
+
+    DADOS DO ANIMAL:
+    Nome: ${dados.animalNome}
+    Espécie: ${dados.animalEspecie}
+    Raça: ${dados.animalRaca || 'Não Informada'}
+    Idade: ${dados.animalIdade || 'Não Informada'}
+    Sexo: ${dados.animalSexo}
+    Peso (kg): ${dados.animalPeso || 'Não Informado'}
+
+    --------------------------------------------------
+    Guarde este comprovante. Ele contém o número único da sua inscrição.
+    `;
+
+    // Cria um objeto Blob para o download
+    const blob = new Blob([comprovanteTexto], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    // Cria um link invisível e simula o clique para iniciar o download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Comprovante_Inscricao_${numeroInscricao}.txt`; // Nome do arquivo
+    
+    // Adiciona ao corpo, clica e remove (simula o download)
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Libera a URL do objeto
+    URL.revokeObjectURL(url);
 }
 
 
 // Ouve o evento de "submit" (envio) do formulário
 document.getElementById("formCadastro").addEventListener("submit", function(e) {
+    // ESSENCIAL: Impede o navegador de recarregar a página
     e.preventDefault();
 
-    // Captura o telefone e o limpa IMEDIATAMENTE
-    const telefone = document.getElementById("tutorTelefone").value;
-    const telefoneLimpo = limparTelefone(telefone);
-
-    // Captura os demais valores, usando o telefone limpo no objeto de dados
+    // Captura os valores de TODOS os campos do seu formulário
     const dados = {
+        // Usamos o 'value' diretamente. Sem limpar, pois é apenas para exibição
         tutorNome: document.getElementById("tutorNome").value,
-        tutorTelefone: telefoneLimpo, // **SALVA o número LIMPO no Firebase**
+        tutorTelefone: document.getElementById("tutorTelefone").value, 
         animalNome: document.getElementById("animalNome").value,
         animalEspecie: document.getElementById("animalEspecie").value,
         animalRaca: document.getElementById("animalRaca").value,
@@ -62,7 +92,10 @@ document.getElementById("formCadastro").addEventListener("submit", function(e) {
         animalSexo: document.getElementById("animalSexo").value,
         animalPeso: document.getElementById("animalPeso").value,
     };
-    
-    // Antes de salvar, verifica se já existe o telefone limpo
-    verificarDuplicidade(telefoneLimpo, dados);
+
+    // Chama a função que salva no Firebase
+    salvarCadastro(dados);
+
+    // Limpa os campos do formulário após o envio
+    this.reset();
 });
