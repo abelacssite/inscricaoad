@@ -1,31 +1,3 @@
-// A função 'db' é definida no index.html e deve estar globalmente acessível.
-
-/**
- * Função principal para salvar os dados no Firestore.
- * @param {object} dados Os dados do formulário a serem salvos.
- */
-function salvarCadastro(dados) {
-    // Define o nome da coleção no Firestore e adiciona os dados
-    db.collection("Animais").add(dados)
-    .then((docRef) => {
-        // SUCESSO! O docRef contém o ID do novo documento (o "Número de Inscrição")
-        
-        // 1. Prepara a mensagem de sucesso
-        const numeroInscricao = docRef.id;
-        
-        // 2. Chama a função para gerar e baixar o comprovante
-        gerarComprovante(numeroInscricao, dados);
-
-        // 3. Alerta o usuário (opcional, pois o comprovante já avisa)
-        alert(`Cadastro realizado com sucesso! Número da Inscrição: ${numeroInscricao}`);
-    })
-    .catch((error) => {
-        // ESSENCIAL: Disparado se houver qualquer erro (regras, rede, config)
-        console.error("ERRO COMPLETO AO TENTAR SALVAR:", error); 
-        alert("Erro ao salvar cadastro. Por favor, verifique sua conexão: " + error.message); 
-    });
-}
-
 /**
  * Gera e inicia o download de um arquivo de texto (.txt) com os dados da inscrição.
  * @param {string} numeroInscricao O ID gerado pelo Firestore (o número da inscrição).
@@ -56,8 +28,8 @@ function gerarComprovante(numeroInscricao, dados) {
     Guarde este comprovante. Ele contém o número único da sua inscrição.
     `;
 
-    // Cria um objeto Blob para o download
-    const blob = new Blob([comprovanteTexto], { type: 'text/plain' });
+    // CORREÇÃO AQUI: Adiciona o parâmetro charset=utf-8 ao tipo MIME
+    const blob = new Blob([comprovanteTexto], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
 
     // Cria um link invisível e simula o clique para iniciar o download
@@ -74,28 +46,4 @@ function gerarComprovante(numeroInscricao, dados) {
     URL.revokeObjectURL(url);
 }
 
-
-// Ouve o evento de "submit" (envio) do formulário
-document.getElementById("formCadastro").addEventListener("submit", function(e) {
-    // ESSENCIAL: Impede o navegador de recarregar a página
-    e.preventDefault();
-
-    // Captura os valores de TODOS os campos do seu formulário
-    const dados = {
-        // Usamos o 'value' diretamente. Sem limpar, pois é apenas para exibição
-        tutorNome: document.getElementById("tutorNome").value,
-        tutorTelefone: document.getElementById("tutorTelefone").value, 
-        animalNome: document.getElementById("animalNome").value,
-        animalEspecie: document.getElementById("animalEspecie").value,
-        animalRaca: document.getElementById("animalRaca").value,
-        animalIdade: document.getElementById("animalIdade").value,
-        animalSexo: document.getElementById("animalSexo").value,
-        animalPeso: document.getElementById("animalPeso").value,
-    };
-
-    // Chama a função que salva no Firebase
-    salvarCadastro(dados);
-
-    // Limpa os campos do formulário após o envio
-    this.reset();
-});
+// ... [o resto do seu script.js permanece inalterado]
