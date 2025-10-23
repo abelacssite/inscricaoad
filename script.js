@@ -1,5 +1,8 @@
 // A variável 'db' é definida no index.html e deve estar globalmente acessível.
 
+// Variável para armazenar a referência ao botão de cadastro
+const botaoCadastro = document.querySelector('#formCadastro button[type="submit"]');
+
 /**
  * Função principal para salvar os dados no Firestore.
  * @param {object} dados Os dados do formulário a serem salvos.
@@ -8,26 +11,65 @@ function salvarCadastro(dados) {
     // Define o nome da coleção no Firestore e adiciona os dados
     db.collection("Animais").add(dados)
     .then((docRef) => {
-        // SUCESSO! O docRef contém o ID do novo documento (o "Numero de Inscricao")
-        
+        // SUCESSO!
         const numeroInscricao = docRef.id;
         
-        // Chama a função para gerar e baixar o comprovante
         gerarComprovante(numeroInscricao, dados);
 
-        // Alerta o usuario
         alert(`Cadastro realizado com sucesso! Numero da Inscricao: ${numeroInscricao}`);
         
-        // Limpa os campos do formulario apos o envio e sucesso
+        // FIM DA OPERAÇÃO: Reabilita o botão
+        botaoCadastro.disabled = false;
         document.getElementById("formCadastro").reset();
     })
     .catch((error) => {
-        // ESSENCIAL: Disparado se houver qualquer erro (regras, rede, config)
+        // FALHA!
         console.error("ERRO COMPLETO AO TENTAR SALVAR:", error); 
         alert("Erro ao salvar cadastro. Por favor, verifique sua conexao ou regras do Firebase: " + error.message); 
+        
+        // FIM DA OPERAÇÃO: Reabilita o botão
+        botaoCadastro.disabled = false;
     });
 }
 
+/**
+ * Verifica se já existe um cadastro com o mesmo Nome do Tutor E Nome do Animal.
+ * @param {object} dados Os dados do formulário a serem salvos.
+ */
+function verificarDuplicidade(dados) {
+    
+    // 1. Desabilita o botão para prevenir múltiplos cliques
+    botaoCadastro.disabled = true; 
+
+    // 2. Faz uma consulta composta na coleção 'Animais'
+    db.collection("Animais")
+      .where("tutorNome", "==", dados.tutorNome) // Filtra pelo Nome do Tutor
+      .where("animalNome", "==", dados.animalNome) // Filtra pelo Nome do Animal
+      .get()
+      .then((querySnapshot) => {
+          if (querySnapshot.empty) {
+              // 3. Se a consulta retornar VAZIA, não há duplicidade, então salva.
+              salvarCadastro(dados);
+          } else {
+              // 4. Se retornar algum documento, a inscrição é duplicada.
+              alert("Erro: Este cadastro (Tutor e Animal) já está registrado!");
+              document.getElementById("formCadastro").reset();
+              
+              // 5. Reabilita o botão, pois a operação foi concluída (com falha de duplicidade)
+              botaoCadastro.disabled = false;
+          }
+      })
+      .catch((error) => {
+          // Captura erros de rede ou, mais importante, erro de ÍNDICE do Firebase
+          console.error("Erro ao verificar duplicidade:", error);
+          alert("Ocorreu um erro ao verificar a duplicidade. Verifique o console para criar o índice necessário.");
+          
+          // Reabilita o botão
+          botaoCadastro.disabled = false;
+      });
+}
+
+// ... [A função gerarComprovante permanece aqui, inalterada]
 /**
  * Gera e inicia o download de um arquivo de texto (.txt) com os dados da inscrição.
  * O texto base foi limpo de acentos e 'C' para evitar problemas de codificacao.
@@ -59,12 +101,11 @@ Peso (kg): ${dados.animalPeso || 'Nao Informado'}
 Guarde este comprovante. Ele contem o numero unico da sua inscricao.
 `;
 
-    // Usa o BOM (Byte Order Mark) para tentar forcar a leitura UTF-8,
-    // mas o texto base ja esta seguro sem caracteres especiais.
+    // Usa o BOM (Byte Order Mark) para tentar forcar a leitura UTF-8.
     const blob = new Blob(['\ufeff', comprovanteTexto], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
 
-    // Cria um link invisivel e simula o clique para iniciar o download
+    // Cria um link invisível e simula o clique para iniciar o download
     const a = document.createElement('a');
     a.href = url;
     a.download = `Comprovante_Inscricao_${numeroInscricao}.txt`; // Nome do arquivo
@@ -81,16 +122,13 @@ Guarde este comprovante. Ele contem o numero unico da sua inscricao.
 
 // Ouve o evento de "submit" (envio) do formulário
 document.getElementById("formCadastro").addEventListener("submit", function(e) {
-    // ESSENCIAL: Impede o navegador de recarregar a pagina
     e.preventDefault();
 
     // Captura os valores de TODOS os campos do seu formulario
-    // Os dados do usuario (Nome, Raca, etc.) ainda podem conter acentos,
-    // o que e o esperado.
     const dados = {
-        tutorNome: document.getElementById("tutorNome").value,
-        tutorTelefone: document.getElementById("tutorTelefone").value, 
-        animalNome: document.getElementById("animalNome").value,
+        tutorNome: document.getElementById("tutorNome").value.trim(), // Limpa espaços extras
+        tutorTelefone: document.getElementById("tutorTelefone").value.trim(), 
+        animalNome: document.getElementById("animalNome").value.trim(), // Limpa espaços extras
         animalEspecie: document.getElementById("animalEspecie").value,
         animalRaca: document.getElementById("animalRaca").value,
         animalIdade: document.getElementById("animalIdade").value,
@@ -98,8 +136,6 @@ document.getElementById("formCadastro").addEventListener("submit", function(e) {
         animalPeso: document.getElementById("animalPeso").value,
     };
 
-    // Chama a funcao que salva no Firebase 
-    salvarCadastro(dados);
-
-    // O reset foi movido para dentro de salvarCadastro para so limpar no sucesso.
+    // A lógica de desabilitar/reabilitar e salvar está agora dentro de verificarDuplicidade
+    verificarDuplicidade(dados);
 });
