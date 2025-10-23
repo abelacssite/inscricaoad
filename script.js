@@ -8,40 +8,40 @@ function salvarCadastro(dados) {
     // Define o nome da coleção no Firestore e adiciona os dados
     db.collection("Animais").add(dados)
     .then((docRef) => {
-        // SUCESSO! O docRef contém o ID do novo documento (o "Número de Inscrição")
+        // SUCESSO! O docRef contém o ID do novo documento (o "Numero de Inscricao")
         
         const numeroInscricao = docRef.id;
         
         // Chama a função para gerar e baixar o comprovante
         gerarComprovante(numeroInscricao, dados);
 
-        // Alerta o usuário
-        alert(`Cadastro realizado com sucesso! Número da Inscrição: ${numeroInscricao}`);
+        // Alerta o usuario
+        alert(`Cadastro realizado com sucesso! Numero da Inscricao: ${numeroInscricao}`);
         
-        // Limpa os campos do formulário após o envio e sucesso
+        // Limpa os campos do formulario apos o envio e sucesso
         document.getElementById("formCadastro").reset();
     })
     .catch((error) => {
         // ESSENCIAL: Disparado se houver qualquer erro (regras, rede, config)
         console.error("ERRO COMPLETO AO TENTAR SALVAR:", error); 
-        alert("Erro ao salvar cadastro. Por favor, verifique sua conexão ou regras do Firebase: " + error.message); 
+        alert("Erro ao salvar cadastro. Por favor, verifique sua conexao ou regras do Firebase: " + error.message); 
     });
 }
 
 /**
  * Gera e inicia o download de um arquivo de texto (.txt) com os dados da inscrição.
- * Corrigido para usar UTF-8 e garantir o reconhecimento de caracteres especiais (Ç, acentos, etc.).
- * * @param {string} numeroInscricao O ID gerado pelo Firestore (o número da inscrição).
- * @param {object} dados Os dados completos do formulário.
+ * O texto base foi limpo de acentos e 'C' para evitar problemas de codificacao.
+ * @param {string} numeroInscricao O ID gerado pelo Firestore (o numero da inscricao).
+ * @param {object} dados Os dados completos do formulario.
  */
 function gerarComprovante(numeroInscricao, dados) {
     
-    // Formata o comprovante com todos os dados
+    // Formata o comprovante com todos os dados - Texto SEM ACENTOS
     const comprovanteTexto = `
---- COMPROVANTE DE INSCRIÇÃO PARA CASTRAÇÃO ---
+--- COMPROVANTE DE INSCRICAO PARA CASTRACAO ---
 
-NÚMERO DA INSCRIÇÃO: ${numeroInscricao}
-Data de Geração: ${new Date().toLocaleDateString('pt-BR')}
+NUMERO DA INSCRICAO: ${numeroInscricao}
+Data de Geracao: ${new Date().toLocaleDateString('pt-BR')}
 
 DADOS DO TUTOR:
 Nome: ${dados.tutorNome}
@@ -49,21 +49,22 @@ Telefone: ${dados.tutorTelefone}
 
 DADOS DO ANIMAL:
 Nome: ${dados.animalNome}
-Espécie: ${dados.animalEspecie}
-Raça: ${dados.animalRaca || 'Não Informada'}
-Idade: ${dados.animalIdade || 'Não Informada'}
+Especie: ${dados.animalEspecie}
+Raca: ${dados.animalRaca || 'Nao Informada'}
+Idade: ${dados.animalIdade || 'Nao Informada'}
 Sexo: ${dados.animalSexo}
-Peso (kg): ${dados.animalPeso || 'Não Informado'}
+Peso (kg): ${dados.animalPeso || 'Nao Informado'}
 
 --------------------------------------------------
-Guarde este comprovante. Ele contém o número único da sua inscrição.
+Guarde este comprovante. Ele contem o numero unico da sua inscricao.
 `;
 
-    // CORREÇÃO: Adiciona o parâmetro charset=utf-8 ao tipo MIME para resolver problemas de codificação
-    const blob = new Blob([comprovanteTexto], { type: 'text/plain;charset=utf-8' });
+    // Usa o BOM (Byte Order Mark) para tentar forcar a leitura UTF-8,
+    // mas o texto base ja esta seguro sem caracteres especiais.
+    const blob = new Blob(['\ufeff', comprovanteTexto], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
 
-    // Cria um link invisível e simula o clique para iniciar o download
+    // Cria um link invisivel e simula o clique para iniciar o download
     const a = document.createElement('a');
     a.href = url;
     a.download = `Comprovante_Inscricao_${numeroInscricao}.txt`; // Nome do arquivo
@@ -80,10 +81,12 @@ Guarde este comprovante. Ele contém o número único da sua inscrição.
 
 // Ouve o evento de "submit" (envio) do formulário
 document.getElementById("formCadastro").addEventListener("submit", function(e) {
-    // ESSENCIAL: Impede o navegador de recarregar a página
+    // ESSENCIAL: Impede o navegador de recarregar a pagina
     e.preventDefault();
 
-    // Captura os valores de TODOS os campos do seu formulário
+    // Captura os valores de TODOS os campos do seu formulario
+    // Os dados do usuario (Nome, Raca, etc.) ainda podem conter acentos,
+    // o que e o esperado.
     const dados = {
         tutorNome: document.getElementById("tutorNome").value,
         tutorTelefone: document.getElementById("tutorTelefone").value, 
@@ -95,8 +98,8 @@ document.getElementById("formCadastro").addEventListener("submit", function(e) {
         animalPeso: document.getElementById("animalPeso").value,
     };
 
-    // Chama a função que salva no Firebase (não há mais verificação de duplicidade)
+    // Chama a funcao que salva no Firebase 
     salvarCadastro(dados);
 
-    // O reset foi movido para dentro de salvarCadastro para só limpar no sucesso.
+    // O reset foi movido para dentro de salvarCadastro para so limpar no sucesso.
 });
