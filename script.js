@@ -18,14 +18,14 @@ function salvarCadastro(dados) {
 
         alert(`Cadastro realizado com sucesso! Numero da Inscricao: ${numeroInscricao}`);
         
-        // FIM DA OPERAÇÃO: Reabilita o botão
+        // FIM DA OPERAÇÃO: Reabilita o botão e limpa o formulário
         botaoCadastro.disabled = false;
         document.getElementById("formCadastro").reset();
     })
     .catch((error) => {
         // FALHA!
         console.error("ERRO COMPLETO AO TENTAR SALVAR:", error); 
-        alert("Erro ao salvar cadastro. Por favor, verifique sua conexao ou regras do Firebase: " + error.message); 
+        alert("Erro ao salvar cadastro. Por favor, verifique sua conexao, regras ou indice do Firebase: " + error.message); 
         
         // FIM DA OPERAÇÃO: Reabilita o botão
         botaoCadastro.disabled = false;
@@ -34,11 +34,12 @@ function salvarCadastro(dados) {
 
 /**
  * Verifica se já existe um cadastro com o mesmo Nome do Tutor E Nome do Animal.
+ * Depende de um indice composto no Firebase (tutorNome, animalNome) para funcionar.
  * @param {object} dados Os dados do formulário a serem salvos.
  */
 function verificarDuplicidade(dados) {
     
-    // 1. Desabilita o botão para prevenir múltiplos cliques
+    // 1. Desabilita o botão (feito no submit, mas mantido para segurança)
     botaoCadastro.disabled = true; 
 
     // 2. Faz uma consulta composta na coleção 'Animais'
@@ -52,10 +53,10 @@ function verificarDuplicidade(dados) {
               salvarCadastro(dados);
           } else {
               // 4. Se retornar algum documento, a inscrição é duplicada.
-              alert("Erro: Este cadastro (Tutor e Animal) já está registrado!");
+              alert("Erro: Este cadastro (Tutor e Animal) ja esta registrado!");
               document.getElementById("formCadastro").reset();
               
-              // 5. Reabilita o botão, pois a operação foi concluída (com falha de duplicidade)
+              // 5. Reabilita o botão
               botaoCadastro.disabled = false;
           }
       })
@@ -69,7 +70,6 @@ function verificarDuplicidade(dados) {
       });
 }
 
-// ... [A função gerarComprovante permanece aqui, inalterada]
 /**
  * Gera e inicia o download de um arquivo de texto (.txt) com os dados da inscrição.
  * O texto base foi limpo de acentos e 'C' para evitar problemas de codificacao.
@@ -82,60 +82,4 @@ function gerarComprovante(numeroInscricao, dados) {
     const comprovanteTexto = `
 --- COMPROVANTE DE INSCRICAO PARA CASTRACAO ---
 
-NUMERO DA INSCRICAO: ${numeroInscricao}
-Data de Geracao: ${new Date().toLocaleDateString('pt-BR')}
-
-DADOS DO TUTOR:
-Nome: ${dados.tutorNome}
-Telefone: ${dados.tutorTelefone}
-
-DADOS DO ANIMAL:
-Nome: ${dados.animalNome}
-Especie: ${dados.animalEspecie}
-Raca: ${dados.animalRaca || 'Nao Informada'}
-Idade: ${dados.animalIdade || 'Nao Informada'}
-Sexo: ${dados.animalSexo}
-Peso (kg): ${dados.animalPeso || 'Nao Informado'}
-
---------------------------------------------------
-Guarde este comprovante. Ele contem o numero unico da sua inscricao.
-`;
-
-    // Usa o BOM (Byte Order Mark) para tentar forcar a leitura UTF-8.
-    const blob = new Blob(['\ufeff', comprovanteTexto], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-
-    // Cria um link invisível e simula o clique para iniciar o download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Comprovante_Inscricao_${numeroInscricao}.txt`; // Nome do arquivo
-    
-    // Adiciona ao corpo, clica e remove (simula o download)
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // Libera a URL do objeto
-    URL.revokeObjectURL(url);
-}
-
-
-// Ouve o evento de "submit" (envio) do formulário
-document.getElementById("formCadastro").addEventListener("submit", function(e) {
-    e.preventDefault();
-
-    // Captura os valores de TODOS os campos do seu formulario
-    const dados = {
-        tutorNome: document.getElementById("tutorNome").value.trim(), // Limpa espaços extras
-        tutorTelefone: document.getElementById("tutorTelefone").value.trim(), 
-        animalNome: document.getElementById("animalNome").value.trim(), // Limpa espaços extras
-        animalEspecie: document.getElementById("animalEspecie").value,
-        animalRaca: document.getElementById("animalRaca").value,
-        animalIdade: document.getElementById("animalIdade").value,
-        animalSexo: document.getElementById("animalSexo").value,
-        animalPeso: document.getElementById("animalPeso").value,
-    };
-
-    // A lógica de desabilitar/reabilitar e salvar está agora dentro de verificarDuplicidade
-    verificarDuplicidade(dados);
-});
+NUMERO DA INSCRICAO: ${numero
