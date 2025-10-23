@@ -39,31 +39,30 @@ function salvarCadastro(dados) {
  */
 function verificarDuplicidade(dados) {
     
-    // 1. Desabilita o botão (feito no submit, mas mantido para segurança)
-    botaoCadastro.disabled = true; 
+    // O botaoCadastro.disabled = true ja foi executado no submit
 
-    // 2. Faz uma consulta composta na coleção 'Animais'
+    // 1. Faz uma consulta composta na coleção 'Animais'
     db.collection("Animais")
       .where("tutorNome", "==", dados.tutorNome) // Filtra pelo Nome do Tutor
       .where("animalNome", "==", dados.animalNome) // Filtra pelo Nome do Animal
       .get()
       .then((querySnapshot) => {
           if (querySnapshot.empty) {
-              // 3. Se a consulta retornar VAZIA, não há duplicidade, então salva.
+              // 2. Se a consulta retornar VAZIA, não há duplicidade, então salva.
               salvarCadastro(dados);
           } else {
-              // 4. Se retornar algum documento, a inscrição é duplicada.
+              // 3. Se retornar algum documento, a inscrição é duplicada.
               alert("Erro: Este cadastro (Tutor e Animal) ja esta registrado!");
               document.getElementById("formCadastro").reset();
               
-              // 5. Reabilita o botão
+              // 4. Reabilita o botão
               botaoCadastro.disabled = false;
           }
       })
       .catch((error) => {
-          // Captura erros de rede ou, mais importante, erro de ÍNDICE do Firebase
+          // 5. Captura erros de rede ou de ÍNDICE do Firebase
           console.error("Erro ao verificar duplicidade:", error);
-          alert("Ocorreu um erro ao verificar a duplicidade. Verifique o console para criar o índice necessário.");
+          alert("Ocorreu um erro ao verificar a duplicidade. Se você não criou o índice, acesse o console.");
           
           // Reabilita o botão
           botaoCadastro.disabled = false;
@@ -82,4 +81,63 @@ function gerarComprovante(numeroInscricao, dados) {
     const comprovanteTexto = `
 --- COMPROVANTE DE INSCRICAO PARA CASTRACAO ---
 
-NUMERO DA INSCRICAO: ${numero
+NUMERO DA INSCRICAO: ${numeroInscricao}
+Data de Geracao: ${new Date().toLocaleDateString('pt-BR')}
+
+DADOS DO TUTOR:
+Nome: ${dados.tutorNome}
+Telefone: ${dados.tutorTelefone}
+
+DADOS DO ANIMAL:
+Nome: ${dados.animalNome}
+Especie: ${dados.animalEspecie}
+Raca: ${dados.animalRaca || 'Nao Informada'}
+Idade: ${dados.animalIdade || 'Nao Informada'}
+Sexo: ${dados.animalSexo}
+Peso (kg): ${dados.animalPeso || 'Nao Informado'}
+
+--------------------------------------------------
+Guarde este comprovante. Ele contem o numero unico da sua inscricao.
+`;
+
+    // Usa o BOM (Byte Order Mark) para tentar forcar a leitura UTF-8.
+    const blob = new Blob(['\ufeff', comprovanteTexto], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    // Cria um link invisível e simula o clique para iniciar o download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Comprovante_Inscricao_${numeroInscricao}.txt`; // Nome do arquivo
+    
+    // Adiciona ao corpo, clica e remove (simula o download)
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Libera a URL do objeto
+    URL.revokeObjectURL(url);
+}
+
+
+// Ouve o evento de "submit" (envio) do formulário
+document.getElementById("formCadastro").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    // INÍCIO DA OPERAÇÃO: Desabilita o botão imediatamente para prevenir duplo clique
+    botaoCadastro.disabled = true;
+
+    // Captura os valores de TODOS os campos do formulario e remove espacos em branco
+    const dados = {
+        tutorNome: document.getElementById("tutorNome").value.trim(), 
+        tutorTelefone: document.getElementById("tutorTelefone").value.trim(), 
+        animalNome: document.getElementById("animalNome").value.trim(), 
+        animalEspecie: document.getElementById("animalEspecie").value,
+        animalRaca: document.getElementById("animalRaca").value,
+        animalIdade: document.getElementById("animalIdade").value,
+        animalSexo: document.getElementById("animalSexo").value,
+        animalPeso: document.getElementById("animalPeso").value,
+    };
+
+    // Chama a função que verifica a duplicidade e só salva se não houver
+    verificarDuplicidade(dados);
+});
